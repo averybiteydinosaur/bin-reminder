@@ -1,6 +1,7 @@
 use chrono::{Duration, Local, NaiveDate};
 use reqwest::blocking::{multipart, Client};
 use std::error::Error;
+use std::fs;
 
 fn initiate_client() -> Result<Client, reqwest::Error> {
     Client::builder()
@@ -52,10 +53,15 @@ fn get_coded_schedule(text_result: String) -> Result<Vec<(String, char)>, Box<dy
 
     for line in text_result.lines() {
         if line.starts_with(address_code) {
+            _ = fs::write("backupSchedule.txt", line);
             return get_coded_pairs(line.to_owned());
         }
     }
-    Err("No result found for specified property")?
+
+    match fs::read_to_string("backupSchedule.txt") {
+        Ok(backup_schedule) => return get_coded_pairs(backup_schedule),
+        Err(_) => Err("No result found for specified property")?,
+    }
 }
 
 fn format_bin(bin_code: char) -> String {
