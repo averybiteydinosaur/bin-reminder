@@ -59,18 +59,18 @@ fn get_coded_schedule(text_result: String) -> Result<Vec<(String, char)>, Box<dy
     }
 
     match fs::read_to_string("backupSchedule.txt") {
-        Ok(backup_schedule) => return get_coded_pairs(backup_schedule),
+        Ok(backup_schedule) => get_coded_pairs(backup_schedule),
         Err(_) => Err("No result found for specified property")?,
     }
 }
 
 fn format_bin(bin_code: char) -> String {
-    return match bin_code {
+    match bin_code {
         'B' => "Black Bin".to_owned(),
         'G' => "Green Bin".to_owned(),
         'R' => "Brown Bin".to_owned(),
         other => format!("Unknown Bin '{}'", other).to_owned(),
-    };
+    }
 }
 
 fn decode_date(coded_date: String) -> Result<NaiveDate, Box<dyn Error>> {
@@ -128,10 +128,11 @@ fn main() {
     let client = initiate_client().expect("Failed to create client"); //Panic on failure, as no client to send error message on
     match get_bin(client.clone()) {
         Err(e) => send_notification(client.clone(), format!("Error: {}", e)),
-        Ok(result) => match result {
-            Some(bin) => send_notification(client.clone(), format!("Put out {} for tomorrow", bin)),
-            None => (),
-        },
+        Ok(result) => {
+            if let Some(bin) = result {
+                send_notification(client.clone(), format!("Put out {} for tomorrow", bin))
+            }
+        }
     }
 }
 
@@ -151,7 +152,7 @@ mod tests {
     #[test]
     fn test_decode_date() {
         let mut response = decode_date("559H".to_owned());
-        let expected = NaiveDate::from_ymd_opt(2024, 01, 01).unwrap();
+        let expected = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
         assert_eq!(response.unwrap(), expected);
 
         response = decode_date("559I".to_owned());
